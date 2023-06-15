@@ -2,15 +2,36 @@ import React, { useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import AudioSource from './audio/AudioSource';
+import AudioAnalyzer from './audio/AudioAnalyzer';
 
 function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioSourceRef = useRef<AudioSource | null>(null);
+  const analyzerRef = useRef<AudioAnalyzer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const playAudio = () => {
     setIsPlaying(true);
+    if (audioSourceRef.current && !audioSourceRef.current.getAudioContext()) {
+      audioSourceRef.current.initializeAudio();
+      analyzerRef.current = new AudioAnalyzer(audioSourceRef.current);
+    }
+
     if (audioRef.current) {
       audioRef.current.play();
+
+      // Analyze audio data every 100ms
+      const intervalId = setInterval(() => {
+        if (analyzerRef.current) {
+          const frequencyData = analyzerRef.current.getFrequencyData();
+          console.log(frequencyData);
+        }
+      }, 100);
+
+      // Clear the interval when the music stops
+      audioRef.current.onended = () => {
+        clearInterval(intervalId);
+      }
     }
   };
 
@@ -26,6 +47,7 @@ function App() {
     const audioElement = audioSource.getAudioElement();
     audioElement.crossOrigin = "anonymous";
 
+    audioSourceRef.current = audioSource;
     audioRef.current = audioElement;
   }, []);
 
