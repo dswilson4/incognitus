@@ -35,7 +35,7 @@ const App = () => {
           const frequencyData = analyzerRef.current.getFrequencyData();
           visualizeAudioData(frequencyData);
         }
-      }, 100);
+      }, 50);
 
       // Clear the interval when the music stops
       audioRef.current.onended = () => {
@@ -57,25 +57,34 @@ const App = () => {
     const width = +svg.attr('width')! - margin.left - margin.right;
     const height = +svg.attr('height')! - margin.top - margin.bottom;
     const barWidth = Math.ceil(width / frequencyData.length);
-
+  
     const x = d3.scaleLinear().range([0, width]);
     const y = d3.scaleLinear().range([height, 0]);
-
+  
     svg.selectAll("*").remove();  // Clear the SVG
-
+  
     const g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
     x.domain([0, frequencyData.length]);
     y.domain([0, d3.max(frequencyData)!]);
-
-    g.selectAll('.bar')
-        .data(frequencyData)
-        .enter().append('rect')
-        .attr('class', 'bar')
-        .attr('x', (d, i) => x(i)!)
-        .attr('width', barWidth)
-        .attr('y', d => y(d)!)
-        .attr('height', d => height - y(d)!);
-};
+  
+    // Append rectangles (bars)
+    const bars = g.selectAll('.bar')
+      .data(frequencyData)
+      .enter().append('rect')
+      .attr('class', 'bar')
+      .attr('x', (d, i) => x(i)!)
+      .attr('width', barWidth - 1) // Reduce bar width slightly to have some space between bars
+      .attr('y', d => y(d)!)
+      .attr('height', d => height - y(d)!);
+  
+    // Add smooth transition
+    bars.transition()
+      .duration(200)
+      .ease(d3.easeLinear)
+      .attr('y', d => y(d)!)
+      .attr('height', d => height - y(d)!);
+  };
+  
 
 
   return (
